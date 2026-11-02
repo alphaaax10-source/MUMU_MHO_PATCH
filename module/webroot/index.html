@@ -1,0 +1,516 @@
+<!doctype html>
+<html lang="en">
+	<head>
+		<meta charset="utf-8">
+		<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+		<meta name="color-scheme" content="dark">
+		<title>MHO MuMu Patcher</title>
+		<link rel="stylesheet" href="/internal/insets.css">
+		<link rel="stylesheet" href="style.css?v=143">
+	</head>
+	<body>
+		<main class="shell">
+			<header class="hero">
+				<div class="eyebrow">VERSION 1.4.2</div>
+				<h1>MHO MuMu Patcher</h1>
+				<p>MuMu compatibility repair, exact-build binary patching, PixelFlow control, resolution scaling and graphics options.</p>
+			</header>
+
+			<section class="ban-warning" role="alert">
+				<div class="warning-mark">!</div>
+				<div>
+					<strong>BAN RISK — USE AT YOUR OWN RISK</strong>
+					<p>The optional binary patches modify the game and bypass game restrictions. They may violate the game's terms of service and may result in account suspension or a permanent ban. The MuMu renderer compatibility fix does not modify the game binary.</p>
+				</div>
+			</section>
+
+			<section id="status-card" class="status-card" aria-live="polite">
+				<span id="status-dot" class="status-dot"></span>
+				<div>
+					<strong id="status-title">Reading module status…</strong>
+					<p id="status-detail">Checking the installed Monster Hunter Outlanders build.</p>
+				</div>
+			</section>
+
+            <section id="game-selector-section" class="card game-selector" hidden>
+                <label for="game-selector"><span class="section-kicker">GAME TO PATCH</span></label>
+                <select id="game-selector" aria-label="Game and profile status"></select>
+                <small id="selected-package" class="path-note"></small>
+            </section>
+			
+			<form id="settings-form">
+				<section class="card">
+					<div class="section-heading">
+						<span class="section-kicker">BINARY STATUS</span>
+						<h2>Installed Build</h2>
+					</div>
+					<div class="status-grid">
+						<div class="status-row"><span>Game Version</span><strong id="game-version">—</strong></div>
+						<div class="status-row"><span>Profile</span><strong id="profile-status">—</strong></div>
+						<div class="status-row">
+							<span>Effective libUnreal<small id="libue-path" class="path-note">—</small></span>
+							<strong id="libue-status">—</strong>
+						</div>
+						<div id="mandatory-status-list"></div>
+
+					</div>
+					<div id="device-checks-force-control" class="force-control" hidden>
+						<label class="force-toggle">
+							<span>
+								<b>Force Device Check Patches</b>
+								<small>Applies the two hardware-check patches outside MuMu.</small>
+							</span>
+							<input id="force-device-checks-enabled" type="checkbox">
+						</label>
+					</div>
+
+					<details id="advanced-control" class="useful-models advanced-menu" hidden>
+						<summary>Advanced settings</summary>
+						<div class="advanced-options">
+							<small class="advanced-note">Checked means enabled. Uncheck a patch to restore its original state, or a watcher to stop automatic checks. Save or Repair applies these game settings. Default loads the current profile’s defaults.</small>
+
+							<div id="mandatory-controls-list"></div>
+
+						</div>
+					</details>
+				</section>
+
+				<section id="shared-section" class="card">
+					<div class="section-heading split-heading">
+						<div>
+							<span class="section-kicker">COMPATIBILITY STATUS</span>
+							<h2>MuMu Compatibility</h2>
+						</div>
+						<div class="badges">
+							<span class="badge risk-none">Ban risk: None</span>
+							<span class="badge recommended">Recommended</span>
+						</div>
+					</div>
+
+					<div class="status-row compact-status">
+						<span>
+							Effective libhp15
+							<small id="hp15-path" class="path-note">—</small>
+						</span>
+						<strong id="hp15-modify">—</strong>
+					</div>
+
+					<label class="toggle-field">
+						<span>
+							<b>Enable libhp15 Compatibility</b>
+							<small>Applies the compatible libhp15 library override.</small>
+						</span>
+						<input id="enable-hp15" type="checkbox">
+					</label>
+
+					<label class="toggle-field">
+						<span>
+							<b>Enable libhp15 Watcher</b>
+							<small>Periodically checks for file changes to keep compatibility enabled.</small>
+						</span>
+						<input id="enable-hp15-watcher" type="checkbox">
+					</label>
+
+					<div id="renderer-status-row" class="status-row compact-status">
+						<span>MuMu GPU Spoof Enforcement</span>
+						<strong id="renderer-config-state">—</strong>
+					</div>
+
+					<label class="toggle-field">
+						<span>
+							<b>Disable MuMu's Enforced GPU Spoof</b>
+							<small>Prevents MuMu from forcing a custom GPU renderer identity.</small>
+						</span>
+						<input id="enable-renderer" type="checkbox">
+					</label>
+
+					<label class="toggle-field">
+						<span>
+							<b>Enable Shader Compatibility Watcher</b>
+							<small>Periodically checks for file changes to keep compatibility enabled.</small>
+						</span>
+						<input id="enable-renderer-watcher" type="checkbox">
+					</label>
+
+					<div id="gler-status-row" class="status-row compact-status">
+						<span>MuMu GL Error Compatibility</span>
+						<strong id="gler-config-state">—</strong>
+					</div>
+
+					<label class="toggle-field">
+						<span>
+							<b>Enable IgnoreGLError Compatibility</b>
+							<small>Adds <code>IgnoreGLError 1</code> to MuMu's renderer.config for this game — required for GPM Device Level 7, which otherwise crashes MuMu's renderer right after the game logo.</small>
+						</span>
+						<input id="enable-gler" type="checkbox">
+					</label>
+				</section>
+
+				<section id="maintenance-section" class="card">
+					<div class="section-heading split-heading">
+						<div>
+							<span class="section-kicker">MAINTENANCE</span>
+							<h2>Game Data</h2>
+						</div>
+					</div>
+
+					<div class="status-row compact-status">
+						<span>Cached GPU identity</span>
+						<strong id="gpu-cache-state">—</strong>
+					</div>
+
+					<button type="button" id="gpu-cache-reset-button" class="secondary" disabled>Reset Game GPU Cache</button>
+					<small class="path-note">Deletes this game's shared_prefs/apm_cfg.xml (one backup is kept in the module state). Run this after changing MuMu's GPU model so the game re-detects it instead of using the stale one.</small>
+				</section>
+
+				<section id="resolution-section" class="card" hidden>
+					<div class="section-heading split-heading">
+						<div>
+							<span class="section-kicker">OPTIONAL PATCH</span>
+							<h2>Resolution</h2>
+						</div>
+						<div class="badges">
+							<span class="badge risk-medium">Ban risk: Medium</span>
+							<span class="badge caution">Laggy</span>
+						</div>
+					</div>
+
+					<div class="status-row compact-status">
+						<span>State</span><strong id="resolution-binary-state">—</strong>
+					</div>
+
+					<label class="toggle-field">
+						<span>
+							<b>Enable Resolution Patch</b>
+							<small>Uses native resolution and applies the selected render scale.</small>
+							<small>Laggy over 1080p x 100%.</small>
+						</span>
+						<input id="resolution-enabled" type="checkbox">
+					</label>
+
+					<label class="field number-field">
+						<span>
+							<b>Resolution Scale</b>
+							<small>From 10 to 200.</small>
+							<small>Values above 100 use supersampling and can be very expensive.</small>
+							<small>(Default is 80 — best balance for smooth rendering)</small>
+						</span>
+						<div class="number-wrap">
+							<input id="resolution-scale" type="number" inputmode="numeric" min="10" max="200" step="1" value="80">
+							<span>%</span>
+						</div>
+					</label>
+				</section>
+
+				<section id="fps-section" class="card" hidden>
+					<div class="section-heading split-heading">
+						<div>
+							<span class="section-kicker">OPTIONAL PATCH</span>
+							<h2>FPS Override</h2>
+						</div>
+						<div class="badges">
+							<span class="badge risk-high">Ban risk: High</span>
+							<span class="badge danger-badge">Experimental</span>
+						</div>
+					</div>
+
+					<div class="status-row compact-status">
+						<span>State</span><strong id="fps-binary-state">—</strong>
+					</div>
+
+					<label class="toggle-field">
+						<span>
+							<b>Enable FPS Override Patch</b>
+							<small id="fps-description">Locks the game’s FPS cap to the selected target.</small>
+						</span>
+						<input id="fps-enabled" type="checkbox">
+					</label>
+
+					<label class="field number-field">
+						<span>
+							<b>Target FPS</b>
+							<small>From 20 to 240.</small>
+							<small>Support from the emulator, display, game logic, and renderer is not guaranteed.</small>
+							<small>Tip: pick the highest value that stays stable during combat — a steady 60 usually feels smoother than a stuttering 90.</small>
+							<small>(Default is 60)</small>
+						</span>
+						<div class="number-wrap">
+							<input id="fps-target" type="number" inputmode="numeric" min="20" max="240" step="1" value="60">
+							<span>FPS</span>
+						</div>
+					</label>
+				</section>
+
+				<section id="pixelflow-section" class="card" hidden>
+					<div class="section-heading split-heading">
+						<div><span class="section-kicker">OPTIONAL PATCH</span><h2>PixelFlow Frame-Generation</h2></div>
+						<div class="badges">
+							<span class="badge risk-low">Ban risk: Low</span>
+							<span class="badge danger-badge">Unstable / Experimental</span>
+						</div>
+					</div>
+					<div class="status-row compact-status"><span>State</span><strong id="pixelflow-binary-state">—</strong></div>
+					<label class="toggle-field">
+						<span>
+							<b>Enable PixelFlow Patch</b>
+							<small>Overwrites the PixelFlow's status.</small>
+							<small>Game's default is On.</small>
+						</span>
+						<input id="pixelflow-patch-enabled" type="checkbox">
+					</label>
+					<label class="field">
+						<span><b>Frame interpolation</b>
+							<small>Forces frame-generation to On of Off.</small>
+						</span>
+						<select id="pixelflow-mode">
+							<option value="disabled">Off</option>
+							<option value="enabled">On</option>
+						</select>
+					</label>
+				</section>
+
+				<section id="gpm-device-level-section" class="card" hidden>
+					<div class="section-heading split-heading">
+						<div>
+							<span class="section-kicker">OPTIONAL PATCH</span>
+							<h2>Unlock Settings</h2>
+						</div>
+						<div class="badges">
+							<span class="badge risk-low">Ban risk: Low</span>
+						</div>
+					</div>
+
+					<div class="status-row compact-status">
+						<span>State</span><strong id="gpm-device-level-binary-state">—</strong>
+					</div>
+
+					<label class="toggle-field">
+						<span>
+							<b>Unlock All Graphics Settings</b>
+							<small>Fallback option if some graphics settings are still locked after the mandatory patch.</small>
+							<small>You can also try to set the Device Model to "Samsung, Galaxy S24 Ultra, SM-S9280" under MuMu Settings > Model instead.</small>
+						</span>
+						<input id="gpm-device-level-enabled" type="checkbox">
+					</label>
+
+					<div id="gpm7-gler-warning" class="status-row compact-status" hidden>
+						<span>⚠ IgnoreGLError is not applied — GPM Level 7 can crash MuMu's renderer right after the logo.</span>
+						<strong id="gpm7-gler-warning-state">Fix</strong>
+					</div>
+				</section>
+
+				<section id="graphic-library-section" class="card" hidden>
+					<div class="section-heading split-heading">
+						<div>
+							<span class="section-kicker">OPTIONAL PATCH</span>
+							<h2>Force Graphic Library</h2>
+						</div>
+						<div class="badges">
+							<span class="badge risk-low">Ban risk: Low</span>
+						</div>
+					</div>
+
+					<div class="status-row compact-status">
+						<span>State</span><strong id="graphic-library-binary-state">—</strong>
+					</div>
+
+					<label class="toggle-field">
+						<span>
+							<b>Enable Force Graphic Library</b>
+							<small>Overrides the game's renderer selection.</small>
+							<small>Forcing OpenGL may fix startup crashes or visual corruption on some GPU profiles.</small>
+						</span>
+						<input id="graphic-library-enabled" type="checkbox">
+					</label>
+
+					<label class="field">
+						<span>
+							<b>Graphic Library</b>
+							<small>Selects the renderer used when the patch is enabled.</small>
+							<small>(Default is OpenGL)</small>
+						</span>
+						<select id="graphic-library">
+							<option value="opengl" selected>OpenGL</option>
+							<option value="vulkan">Vulkan</option>
+						</select>
+					</label>
+
+					<details class="useful-models">
+						<summary>Particularly useful on:</summary>
+						<div>
+							<small>Adreno (TM) 830</small>
+							<small>Adreno (TM) 750</small>
+							<small>Adreno (TM) 840</small>
+							<small>Mali-G925-Immortalis MC16</small>
+							<small>Mali-G925-Immortalis MC12</small>
+							<small>Mali-G720-Immortalis MC12</small>
+							<small>Mali-G1-Ultra MC12</small>
+						</div>
+					</details>
+				</section>
+
+				<section id="cross-platform-section" class="card" hidden>
+					<div class="section-heading split-heading">
+						<div>
+							<span class="section-kicker">OPTIONAL PATCH</span>
+							<h2>Force Platform Override</h2>
+						</div>
+						<div class="badges">
+							<span class="badge risk-high">Ban risk: High</span>
+							<span class="badge critical-badge">Broken / Test Only</span>
+						</div>
+					</div>
+
+					<div class="status-row compact-status">
+						<span>State</span><strong id="cross-platform-binary-state">—</strong>
+					</div>
+
+					<label class="toggle-field">
+						<span>
+							<b>Enable Platform Override</b>
+							<small>Forces the game to run with a specific platform's profile.</small>
+						</span>
+						<input id="cross-platform-enabled" type="checkbox">
+					</label>
+
+					<label class="field">
+						<span>
+							<b>Platform</b>
+							<small>Selects the Platform value.</small>
+							<small>(Default is Mobile)</small>
+						</span>
+						<select id="cross-platform">
+							<option value="mobile" selected>Mobile</option>
+							<option value="pc">PC</option>
+							<option value="console">Console</option>
+						</select>
+					</label>
+				</section>
+
+				<section id="controller-mode-section" class="card" hidden>
+					<div class="section-heading split-heading">
+						<div><span class="section-kicker">OPTIONAL PATCH</span><h2>Force Controller Mode</h2></div>
+						<div class="badges"><span class="badge risk-medium">Ban risk: Medium</span></div>
+					</div>
+					<div class="status-row compact-status"><span>State</span><strong id="controller-mode-binary-state">—</strong></div>
+					<label class="toggle-field">
+						<span>
+							<b>Force Controller Mode On</b>
+							<small>Keeps controller mode active.</small>
+							<small>Experimental. Some scenes may still require touch input and the controller detection is still not fully understood.</small>
+						</span>
+						<input id="controller-mode-enabled" type="checkbox">
+					</label>
+				</section>
+
+				<section id="hide-uuid-section" class="card" hidden>
+					<div class="section-heading split-heading">
+						<div><span class="section-kicker">OPTIONAL PATCH</span><h2>Hide Account UUID</h2></div>
+						<div class="badges"><span class="badge risk-medium">Ban risk: Medium</span></div>
+					</div>
+					<div class="status-row compact-status"><span>State</span><strong id="hide-uuid-binary-state">—</strong></div>
+					<label class="toggle-field">
+						<span>
+							<b>Hide UUID</b>
+							<small>Hide the display of your account ID on the left of the screen.</small>
+							<small>Experimental: not sure yet about repercussions.</small>
+						</span>
+						<input id="hide-uuid-enabled" type="checkbox">
+					</label>
+				</section>
+
+				<section id="gpu-display-section" class="card" hidden>
+					<div class="section-heading split-heading">
+						<div>
+							<span class="section-kicker">OPTIONAL PATCH</span>
+							<h2>GPU Identity Fix</h2>
+						</div>
+						<div class="badges">
+							<span class="badge risk-medium">Ban risk: Medium</span>
+							<span class="badge critical-badge">Now Useless</span>
+						</div>
+					</div>
+
+					<div class="status-row compact-status">
+						<span>State</span><strong id="gpu-display-binary-state">—</strong>
+					</div>
+
+					<label class="toggle-field">
+						<span>
+							<b>Send the proper GPU Model in the Device Info</b>
+							<small>It fixes the <u>former</u> in-game watermark, prevents "Placeholder" from appearing in the GPU field, but may also expose it to other game systems and telemetry.</small>
+							<small>Provides no benefits.</small>
+						</span>
+						<input id="gpu-display-enabled" type="checkbox">
+					</label>
+				</section>
+
+				<section id="graphic-api-display-section" class="card" hidden>
+					<div class="section-heading split-heading">
+						<div>
+							<span class="section-kicker">OPTIONAL PATCH</span>
+							<h2>Extended Watermark Info</h2>
+						</div>
+						<div class="badges">
+							<span class="badge risk-medium">Ban risk: Medium</span>
+							<span class="badge danger-badge">Unstable / Experimental</span>
+						</div>
+					</div>
+
+					<div class="status-row compact-status">
+						<span>State</span><strong id="graphic-api-display-binary-state">—</strong>
+					</div>
+
+					<label class="toggle-field">
+						<span>
+							<b>Show the active Graphic API to Device Info</b>
+							<small>Displays OpenGL or Vulkan in the in-game watermark.</small>
+						</span>
+						<input id="graphic-api-display-enabled" type="checkbox">
+					</label>
+
+					<label class="toggle-field">
+						<span>
+							<b>Show the active Platform to Device Info</b>
+							<small>Displays the effective Platform profile in the in-game watermark.</small>
+						</span>
+						<input id="platform-display-enabled" type="checkbox">
+					</label>
+				</section>
+
+				<section id="ueini-section" class="card" hidden>
+					<div class="section-heading split-heading">
+						<div>
+							<span class="section-kicker">EXPERIMENTAL</span>
+							<h2>Streaming Fix (UE Engine.ini)</h2>
+						</div>
+						<div class="badges">
+							<span class="badge risk-low">Ban risk: Low</span>
+							<span class="badge danger-badge">Experimental</span>
+						</div>
+					</div>
+
+					<div class="status-row compact-status">
+						<span>State</span><strong id="ueini-state">—</strong>
+					</div>
+
+					<label class="toggle-field">
+						<span>
+							<b>Enable Streaming Fix</b>
+							<small>Adds a marker block to this game's Android Engine.ini (r.Streaming.PoolSize, dynamic-res off) to smooth out first-visit map stutter. Works only if the game reads its config — safe to toggle off.</small>
+						</span>
+						<input id="ueini-enabled" type="checkbox">
+					</label>
+				</section>
+
+				<div class="actions">
+					<button type="button" id="default-button" class="secondary">Default</button>
+					<button type="button" id="repair-button" class="danger">Repair</button>
+					<button type="submit" id="save-button" class="primary">Save</button>
+				</div>
+			</form>
+		</main>
+
+		<script src="app.js?v=143"></script>
+	</body>
+</html>
