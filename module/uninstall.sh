@@ -1,6 +1,6 @@
 #!/system/bin/sh
 
-# MHO MuMu Patcher 1.4.2
+# MHO MuMu Patcher 1.4.3
 # KernelSU runs uninstall.sh during post-fs-data, where PackageManager/Binder
 # may not exist yet. apply_patch.sh therefore uses its cached/direct-filesystem
 # restore path first and does not depend on `pm` for this lifecycle operation.

@@ -5,8 +5,8 @@ game **MHOutlanders (MHO)** dan menambah patch opsional (resolusi, FPS,
 unlock settings, dsb). Tekan **`<> Open`** di KernelSU Manager untuk membuka
 WebUI-nya.
 
-Versi saat ini: **v1.4.2** (`versionCode 143`) — lihat
-[`dist/MHO_MuMu_Patcher_v1.4.2.zip`](dist/MHO_MuMu_Patcher_v1.4.2.zip).
+Versi saat ini: **v1.4.3** (`versionCode 144`) — lihat
+[`release/MHO_MuMu_Patcher_v1.4.3.zip`](release/MHO_MuMu_Patcher_v1.4.3.zip).
 
 ## Fitur
 
@@ -27,6 +27,12 @@ Versi saat ini: **v1.4.2** (`versionCode 143`) — lihat
 - Force Graphic Library (OpenGL/Vulkan), Cross-Platform, GPU Display,
   Extended Watermark, PixelFlow, Hide-UUID, Controller Mode
 
+**Performance Optimizer (baru v1.4.3):**
+- Tombol **Apply Performance Max** satu-klik: Resolution75, FPS lock60,
+  PixelFlow off, IgnoreGLError on, streaming fix preset **Max FPS**.
+- Preset streaming fix **Balanced / Max FPS** (partikel, shadow,
+  post-process dipangkas di Max FPS).
+
 **Maintenance baru di v1.4.2:**
 - **Reset Game GPU Cache** — hapus `shared_prefs/apm_cfg.xml` (backup
   disimpan) setelah mengganti model GPU di MuMu.
@@ -46,7 +52,7 @@ Versi saat ini: **v1.4.2** (`versionCode 143`) — lihat
 
 ```
 module/   ← sumber modul v1.4.2 (zip dengan menyeret seluruh isi folder ini)
-dist/     ← ZIP siap pasang
+release/  ← ZIP siap pasang (v1.4.2 & v1.4.3)
 docs/     ← analisis lengkap arsitektur patcher + changelog v1.4.2
 tests/    ← uji unit/integrasi (sh test_gler_awk.sh, dst.)
 ```
@@ -54,7 +60,7 @@ tests/    ← uji unit/integrasi (sh test_gler_awk.sh, dst.)
 Membangun ulang ZIP dari sumber:
 
 ```sh
-cd module && zip -r -X ../MHO_MuMu_Patcher_v1.4.2.zip .
+cd module && zip -r -X ../MHO_MuMu_Patcher_v1.4.3.zip .
 ```
 
 ## Peringatan

@@ -233,10 +233,44 @@ out=$(print_shared_status 2>/dev/null)
 printf '%s\n' "$out" | grep -q '^mandatory_gler_saved_disabled=1$' && ok || bad "8e gler disabled saved"
 # per-game status keys
 out=$(print_status_legacy 2>/dev/null)
-printf '%s\n' "$out" | grep -q '^module_version=1.4.2$' && ok || bad "8f module_version"
+printf '%s\n' "$out" | grep -q '^module_version=1.4.3$' && ok || bad "8f module_version"
 printf '%s\n' "$out" | grep -q '^gler_state=' && ok || bad "8g per-game gler_state"
 printf '%s\n' "$out" | grep -q '^ueini_state=' && ok || bad "8h per-game ueini_state"
 printf '%s\n' "$out" | grep -q '^mandatory_gler_saved_disabled=1$' && ok || bad "8i per-game gler pref"
+
+# ---------- 9. ueini presets (v1.4.3) ----------
+ue_data="$UEINI_DATA_ROOT/$pkg"
+ue_dir="$ue_data/files/UnrealGame/MHOutlanders/Saved/Config/Android"
+mkdir -p "$ue_dir"
+printf '[Audio]\nX=1\n' > "$ue_dir/Engine.ini"
+set_game "$pkg"
+out=$(do_ueini on) || bad "9a ueini on rc=$?"
+printf '%s\n' "$out" | grep -q '^ueini_preset=balanced$' && ok || bad "9b default preset balanced"
+grep -q 'r.ParticleLODBias=1' "$ue_dir/Engine.ini" && ok || bad "9c balanced particle lod"
+grep -q 'sg.EffectsQuality' "$ue_dir/Engine.ini" && bad "9d balanced no sg" || ok
+[ "$(ueini_preset_value)" = balanced ] && ok || bad "9e preset value balanced"
+out=$(do_ueini on maxfps) || bad "9f ueini on maxfps rc=$?"
+printf '%s\n' "$out" | grep -q '^ueini_preset=maxfps$' && ok || bad "9g maxfps echoed"
+grep -q 'sg.EffectsQuality=0' "$ue_dir/Engine.ini" && ok || bad "9h maxfps sg block"
+grep -q 'r.ParticleLODBias=2' "$ue_dir/Engine.ini" && ok || bad "9i maxfps particle lod2"
+grep -q 'r.MotionBlurQuality=0' "$ue_dir/Engine.ini" && ok || bad "9j motion blur off"
+[ "$(grep -c 'MHO_MU_MU_PATCHER_BEGIN' "$ue_dir/Engine.ini")" = 1 ] && ok || bad "9k single block after switch"
+# `on` without preset keeps previous preset
+out=$(do_ueini on) || bad "9l re-on rc=$?"
+printf '%s\n' "$out" | grep -q '^ueini_preset=maxfps$' && ok || bad "9m keeps previous preset"
+# invalid preset rejected
+( do_ueini on ultra ) >/dev/null 2>&1 && bad "9n invalid preset rejected" || ok
+# status carries the key
+out=$(print_status_legacy 2>/dev/null)
+printf '%s\n' "$out" | grep -q '^ueini_preset=maxfps$' && ok || bad "9o status ueini_preset"
+do_ueini off >/dev/null || bad "9p off rc=$?"
+printf '%s\n' "$out" >/dev/null
+out=$(print_status_legacy 2>/dev/null)
+printf '%s\n' "$out" | grep -q '^ueini_preset=balanced$' && ok || bad "9q preset value after off"
+# shared-status carries an empty preset key
+out=$(print_shared_status 2>/dev/null)
+printf '%s\n' "$out" | grep -q '^ueini_preset=$' && ok || bad "9r shared ueini_preset key"
+rm -rf "$ue_data"
 
 echo "passed=$pass failed=$fail"
 [ "$fail" = 0 ]

@@ -97,7 +97,7 @@ printf '%s\n' "$out" | grep -q '^gpu_cache_reset=missing$' && ok || bad "4c miss
 
 # --- status for known game includes new keys ---
 out=$(run_main status "$pkg" 2>/dev/null)
-printf '%s\n' "$out" | grep -q '^module_version=1.4.2$' && ok || bad "5a module_version"
+printf '%s\n' "$out" | grep -q '^module_version=1.4.3$' && ok || bad "5a module_version"
 printf '%s\n' "$out" | grep -q '^gler_state=' && ok || bad "5b gler_state"
 printf '%s\n' "$out" | grep -q '^ueini_state=' && ok || bad "5c ueini_state"
 printf '%s\n' "$out" | grep -q '^mandatory_gler_saved_disabled=1$' && ok || bad "5d gler pref visible per game"

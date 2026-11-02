@@ -267,3 +267,25 @@ menerima argumen ke-5 (kompatibel WebUI lama 4 argumen).
 Pengujian: `tests/test_gler_awk.sh` (30), `tests/test_v142_integration.sh` (56),
 `tests/test_v142_main_dispatch.sh` (26) — semuanya lulus juga terhadap artefak
 zip hasil ekstraksi segar; `sh -n` semua script + `node --check` app.js bersih.
+
+---
+
+## 11. Pembaruan v1.4.3 — Performance Optimizer maksimal
+
+ZIP: `proton_probe/downloads/MHO_MuMu_Patcher_v1.4.3.zip`
+(`version=1.4.3` / `versionCode=144`; SHA-256 `ccc6ad8b…223eb`).
+
+| # | Fitur | Detail |
+|---|-------|--------|
+| 1 | **Tombol "Apply Performance Max"** (WebUI) | Sekali klik: Resolution75 + FPS lock60 + PixelFlow off + IgnoreGLError on + UE streaming fix preset **Max FPS** — semua masuk lewat jalur Save normal (profile-aware, verifikasi byte). |
+| 2 | **Preset streaming fix: Balanced / Max FPS** | `ueini <pkg> on [balanced\|maxfps]`; pilihan preset di kartu Streaming Fix. |
+| 3 | **Blok Engine.ini diperkaya** | *Balanced*: `r.Streaming.PoolSize=1024`, `r.DynamicRes.OperationMode=0`, `r.ParticleLODBias=1`, `r.MotionBlurQuality=0`, `r.DepthOfFieldQuality=0`. *Max FPS*: + `sg.EffectsQuality=0`, `sg.ShadowQuality=0`, `sg.PostProcessQuality=0`, `sg.TextureQuality=1`, `sg.ViewDistanceQuality=1`, `r.AntiAliasingMethod=0`, `r.ParticleLODBias=2`. Cvar tak dikenal diabaikan game (aman). |
+| 4 | Kunci preset | `on` tanpa argumen mempertahankan preset sebelumnya; status baru `ueini_preset=` di `status` & `shared-status`. |
+
+Catatan diagnosis (konteks): stutter terbukti **bukan** beban GPU/CPU
+(GPU20-30%, semua core <70%, ulangan battle identik, cap30 pun jatuh) —
+optimizer ini menekan **kedalaman drop**; stall menunggu disk/jaringan
+di luar jangkauan patcher.
+
+Pengujian: suite bertambah →30 awk +70 integrasi +26 dispatch =126 assert,
+lulus juga terhadap artefak zip segar; `sh -n` + `node --check` bersih.

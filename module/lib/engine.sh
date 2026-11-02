@@ -1,6 +1,6 @@
 #!/system/bin/sh
 
-# MHO MuMu Patcher 1.4.2
+# MHO MuMu Patcher 1.4.3
 # KernelSU executes module scripts with BusyBox ash in standalone mode.
 
 MODDIR=${0%/*}
@@ -3348,7 +3348,7 @@ print_status_legacy() {
 	printf 'pixelflow_saved_choice=%s\n' "$PIXELFLOW_CHOICE"
 	printf 'pixelflow_state=%s\n' "${PIXELFLOW_STATE:-unavailable}"
 	print_multi_status
-	printf 'module_version=1.4.2\n'
+	printf 'module_version=1.4.3\n'
 	printf 'package_detected=%s\n' "$detected"
 	printf 'game_version=%s\n' "${VERSION:-unknown}"
 	printf 'profile_supported=%s\n' "$supported"
@@ -3458,6 +3458,7 @@ print_status_legacy() {
 	printf 'mandatory_gler_saved_disabled=%s\n' "${MANDATORY_GLER_DISABLED:-0}"
 	printf 'gler_state=%s\n' "$GLER_STATE"
 	printf 'ueini_state=%s\n' "$(ueini_inspect)"
+	printf 'ueini_preset=%s\n' "$(ueini_preset_value)"
 }
 
 # ---------------------------------------------------------------------------
@@ -3496,9 +3497,36 @@ ueini_config_dir() {
 	return 1
 }
 
+ueini_preset_value() {
+	local preset
+	preset=$(scalar_value "$(ueini_record_file)" preset)
+	case "$preset" in balanced|maxfps) printf '%s' "$preset" ;; *) printf 'balanced' ;; esac
+}
+
+# $1 = preset: balanced (default) | maxfps
+# Unknown cvars are ignored by the game; the marker block is replaced whole.
 ueini_write_block() {
-	printf '%s\n' "$UEINI_MARKER_BEGIN" "[/SystemSettings]" \
-		"r.Streaming.PoolSize=1024" "r.DynamicRes.OperationMode=0" "$UEINI_MARKER_END"
+	local preset=${1:-balanced}
+	case "$preset" in balanced|maxfps) ;; *) preset=balanced ;; esac
+	printf '%s\n' "$UEINI_MARKER_BEGIN" "[/SystemSettings]"
+	printf '%s\n' \
+		"r.Streaming.PoolSize=1024" \
+		"r.DynamicRes.OperationMode=0" \
+		"r.MotionBlurQuality=0" \
+		"r.DepthOfFieldQuality=0"
+	if [ "$preset" = maxfps ]; then
+		printf '%s\n' \
+			"r.ParticleLODBias=2" \
+			"sg.EffectsQuality=0" \
+			"sg.ShadowQuality=0" \
+			"sg.PostProcessQuality=0" \
+			"sg.TextureQuality=1" \
+			"sg.ViewDistanceQuality=1" \
+			"r.AntiAliasingMethod=0"
+	else
+		printf '%s\n' "r.ParticleLODBias=1"
+	fi
+	printf '%s\n' "$UEINI_MARKER_END"
 }
 
 ueini_strip_block() {
@@ -3525,10 +3553,16 @@ ueini_install_file() {
 }
 
 do_ueini() {
-	local action=${1:-} record dir file tmp created
+	local action=${1:-} preset=${2:-} record dir file tmp created
 	case "$action" in on|off) ;; *) fail "UE streaming fix action must be on or off" ;; esac
+	case "$preset" in ""|balanced|maxfps) ;; *) fail "UE streaming preset must be balanced or maxfps" ;; esac
 	[ ! -f "$MODDIR/disable" ] && [ ! -f "$MODDIR/remove" ] || fail "Module is disabled"
 	record=$(ueini_record_file)
+	# `on` without an explicit preset keeps the previously used one.
+	if [ "$action" = on ] && [ -z "$preset" ]; then
+		preset=$(scalar_value "$record" preset)
+	fi
+	case "$preset" in balanced|maxfps) ;; *) preset=balanced ;; esac
 	if [ "$action" = off ]; then
 		[ -f "$record" ] || { log_line "UE streaming fix is not enabled for $TARGET_PACKAGE"; printf 'ueini_state=disabled\n'; return 0; }
 		dir=$(scalar_value "$record" dir)
@@ -3550,7 +3584,7 @@ do_ueini() {
 		fi
 		rm -f "$record"
 		log_line "UE streaming fix disabled for $TARGET_PACKAGE"
-		printf 'ueini_state=disabled\n'
+		printf 'ueini_state=disabled\nueini_preset=\n'
 		return 0
 	fi
 	dir=$(ueini_config_dir) || fail "UE Android config directory not found for $TARGET_PACKAGE; launch the game once and retry"
@@ -3568,14 +3602,14 @@ do_ueini() {
 		: > "$tmp"
 	fi
 	if [ -s "$tmp" ]; then printf '\n' >> "$tmp"; fi
-	ueini_write_block >> "$tmp" || fail "Could not build Engine.ini"
+	ueini_write_block "$preset" >> "$tmp" || fail "Could not build Engine.ini"
 	ueini_install_file "$tmp" "$file" || fail "Could not write Engine.ini"
 	rm -f "$tmp"
 	tmp="$record.$$.tmp"; TEMP_FILES="$TEMP_FILES $tmp"
-	printf 'enabled=1\ncreated=%s\ndir=%s\nfile=%s\n' "$created" "$dir" "$file" > "$tmp" \
+	printf 'enabled=1\ncreated=%s\ndir=%s\nfile=%s\npreset=%s\n' "$created" "$dir" "$file" "$preset" > "$tmp" \
 		&& chmod 0600 "$tmp" && mv -f "$tmp" "$record" || fail "Could not save UE streaming state"
-	log_line "UE streaming fix enabled for $TARGET_PACKAGE"
-	printf 'ueini_state=applied\n'
+	log_line "UE streaming fix enabled for $TARGET_PACKAGE ($preset)"
+	printf 'ueini_state=applied\nueini_preset=%s\n' "$preset"
 	return 0
 }
 

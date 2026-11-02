@@ -646,7 +646,7 @@ print_shared_status() {
     printf 'mandatory_gler_saved_disabled=%s\n' "$MANDATORY_GLER_DISABLED"
     gler_inspect_all
     printf 'gler_state=%s\n' "$GLER_ALL_STATE"
-    printf 'ueini_state=unavailable\n'
+    printf 'ueini_state=unavailable\nueini_preset=\n'
 }
 
 # Run common handlers in a subshell: their legacy globals must not overwrite the

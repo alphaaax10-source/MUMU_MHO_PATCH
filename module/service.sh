@@ -1,6 +1,6 @@
 #!/system/bin/sh
 
-# MHO MuMu Patcher 1.4.2
+# MHO MuMu Patcher 1.4.3
 # Persistent-in-this-boot lifecycle watcher. It is launched once while the
 # module is enabled, remains alive after a Disable marker appears, restores the
 # pristine library with retries, and can re-apply the configured state if the

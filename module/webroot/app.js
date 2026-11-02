@@ -66,6 +66,9 @@
 	const ueiniSection = document.getElementById("ueini-section");
 	const ueiniState = document.getElementById("ueini-state");
 	const ueiniEnabled = document.getElementById("ueini-enabled");
+	const ueiniPreset = document.getElementById("ueini-preset");
+	const presetPerformanceButton = document.getElementById("preset-performance-button");
+	const optimizerPresetState = document.getElementById("optimizer-preset-state");
 
 	const resolutionSection = document.getElementById("resolution-section");
 	const resolutionBinaryState = document.getElementById("resolution-binary-state");
@@ -130,6 +133,9 @@
 		statusCard.classList.toggle("processing", value);
 		for (const control of [...managedControls, ...mandatoryControls.map(p => p.control)]) control.disabled = value || control.dataset.unsupported === "1";
         for (const control of [saveButton, repairButton]) control.disabled = value || !statusLoaded;
+        presetPerformanceButton.disabled = value || !statusLoaded || !selectedPackage;
+        ueiniEnabled.disabled = value;
+        ueiniPreset.disabled = value || !lastData || lastData.ueini_state !== "applied";
 		saveButton.textContent = value && action === "save" ? "Saving…" : "Save";
 		repairButton.textContent = value && action === "repair" ? "Repairing…" : "Repair";
 	}
@@ -312,7 +318,14 @@
 			ueiniState.textContent = prettyUeiniState(ueiniStatus);
 			setUeiniState(ueiniState, ueiniStatus);
 			ueiniEnabled.checked = ueiniStatus === "applied";
+			const preset = data.ueini_preset === "maxfps" ? "maxfps" : "balanced";
+			ueiniPreset.value = preset;
+			ueiniPreset.disabled = busy || ueiniStatus !== "applied";
 		}
+		optimizerPresetState.textContent = ueiniStatus === "applied"
+			? (data.ueini_preset === "maxfps" ? "Max FPS" : "Balanced")
+			: "—";
+		presetPerformanceButton.disabled = busy || !statusLoaded || !selectedPackage;
 		gpuCacheState.textContent = selectedPackage ? "Available" : "—";
 		gpuCacheResetButton.disabled = busy || !selectedPackage;
 
@@ -810,7 +823,7 @@
 		const want = ueiniEnabled.checked;
 		setBusy(true, "ueini");
 		try {
-			await runModule(["ueini", selectedPackage, want ? "on" : "off"]);
+			await runModule(["ueini", selectedPackage, want ? "on" : "off", ueiniPreset.value]);
 			setStatus("success", want ? "Streaming fix enabled" : "Streaming fix disabled", want
 				? "A marker block was added to this game's Android Engine.ini."
 				: "The marker block was removed from this game's Android Engine.ini.");
@@ -837,6 +850,56 @@
 			try { await refreshStatus(true); } catch (_) {}
 		}
 	});
+	ueiniPreset.addEventListener("change", async () => {
+		if (busy || !selectedPackage || !lastData || lastData.ueini_state !== "applied") return;
+		setBusy(true, "ueini");
+		try {
+			await runModule(["ueini", selectedPackage, "on", ueiniPreset.value]);
+			setStatus("success", "Streaming preset updated", `Preset: ${ueiniPreset.value === "maxfps" ? "Max FPS" : "Balanced"}. Restart the game to apply it.`);
+		} catch (error) {
+			setStatus("error", "Preset could not be applied", error.message);
+		} finally {
+			setBusy(false, "ueini");
+			try { await refreshStatus(true); } catch (_) {}
+		}
+	});
+	let presetRunning = false;
+	async function applyPerformancePreset() {
+		if (presetRunning || busy || !statusLoaded || !selectedPackage) return;
+		if (!window.confirm("Apply Performance Max?\n\n• Resolution 75%\n• FPS lock 60\n• PixelFlow off\n• IgnoreGLError on\n• UE streaming fix → Max FPS preset\n\nIn-game afterwards: Effects/Particles & Shadows = Low, disable Motion Blur/DOF, then restart the game.")) return;
+		presetRunning = true;
+		setBusy(true, "preset");
+		try {
+			// Game-side streaming fix first (independent of the binary save).
+			try {
+				await runModule(["ueini", selectedPackage, "on", "maxfps"]);
+			} catch (error) {
+				setStatus("", "Streaming fix skipped", error.message);
+			}
+			// UI controls feed the normal Save flow (profile-aware, byte-verified).
+			resolutionEnabled.checked = true;
+			resolutionScale.value = "75";
+			fpsEnabled.checked = true;
+			fpsTarget.value = "60";
+			pixelflowPatchEnabled.checked = false;
+			enableGler.checked = true;
+			dirty = true;
+			sharedDirty = true;
+		} catch (error) {
+			setStatus("error", "Preset could not be prepared", error.message);
+		} finally {
+			setBusy(false, "preset");
+		}
+		if (!statusDot.classList.contains("error")) {
+			// applySettings runs with busy=false (it manages busy itself).
+			await applySettings("save");
+			if (!statusDot.classList.contains("error")) {
+				setStatus("success", "Performance Max applied", "Resolution 75 · FPS 60 · PixelFlow off · IgnoreGLError on · streaming fix Max FPS. Set in-game effects to Low and restart the game.");
+			}
+		}
+		presetRunning = false;
+	}
+	presetPerformanceButton.addEventListener("click", applyPerformancePreset);
 	defaultButton.addEventListener("click", loadDefaults);
 	repairButton.addEventListener("click", repairBinary);
 

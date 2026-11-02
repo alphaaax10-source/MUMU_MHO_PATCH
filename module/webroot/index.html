@@ -6,12 +6,12 @@
 		<meta name="color-scheme" content="dark">
 		<title>MHO MuMu Patcher</title>
 		<link rel="stylesheet" href="/internal/insets.css">
-		<link rel="stylesheet" href="style.css?v=143">
+		<link rel="stylesheet" href="style.css?v=144">
 	</head>
 	<body>
 		<main class="shell">
 			<header class="hero">
-				<div class="eyebrow">VERSION 1.4.2</div>
+				<div class="eyebrow">VERSION 1.4.3</div>
 				<h1>MHO MuMu Patcher</h1>
 				<p>MuMu compatibility repair, exact-build binary patching, PixelFlow control, resolution scaling and graphics options.</p>
 			</header>
@@ -161,6 +161,25 @@
 
 					<button type="button" id="gpu-cache-reset-button" class="secondary" disabled>Reset Game GPU Cache</button>
 					<small class="path-note">Deletes this game's shared_prefs/apm_cfg.xml (one backup is kept in the module state). Run this after changing MuMu's GPU model so the game re-detects it instead of using the stale one.</small>
+				</section>
+
+				<section id="optimizer-section" class="card">
+					<div class="section-heading split-heading">
+						<div>
+							<span class="section-kicker">ONE-CLICK</span>
+							<h2>Performance Optimizer</h2>
+						</div>
+						<div class="badges">
+							<span class="badge risk-low">Ban risk: Low</span>
+						</div>
+					</div>
+
+					<div class="status-row compact-status">
+						<span>Streaming Fix preset</span><strong id="optimizer-preset-state">—</strong>
+					</div>
+
+					<button type="button" id="preset-performance-button" class="primary" disabled>Apply Performance Max</button>
+					<small class="path-note">One step: Resolution 75%, FPS lock 60, PixelFlow off, IgnoreGLError on, and the UE streaming fix on the Max FPS preset — then press happens automatically via Save. After it finishes, still set in-game: Effects/Particles & Shadows = Low, disable Motion Blur/DOF, then restart the game.</small>
 				</section>
 
 				<section id="resolution-section" class="card" hidden>
@@ -501,6 +520,18 @@
 						</span>
 						<input id="ueini-enabled" type="checkbox">
 					</label>
+
+					<label class="field">
+						<span>
+							<b>Preset</b>
+							<small><b>Balanced</b> — texture streaming + anti-blur, partikel sedikit dipangkas.</small>
+							<small><b>Max FPS</b> — tambahan efek/shadow/post-process dipangkas maksimal (partikel battle paling ringan).</small>
+						</span>
+						<select id="ueini-preset">
+							<option value="balanced" selected>Balanced</option>
+							<option value="maxfps">Max FPS</option>
+						</select>
+					</label>
 				</section>
 
 				<div class="actions">
@@ -511,6 +542,6 @@
 			</form>
 		</main>
 
-		<script src="app.js?v=143"></script>
+		<script src="app.js?v=144"></script>
 	</body>
 </html>

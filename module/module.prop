@@ -1,6 +1,6 @@
 id=mho_mumu_patcher
 name=MHO MuMu Patcher
-version=1.4.2
-versionCode=143
+version=1.4.3
+versionCode=144
 author=OpenAI
 description=MuMu Player compatibility fix for MHOutlanders, with patches for optional Resolution, Framerate, Unlock Settings and more; press "<> Open" for more options.
